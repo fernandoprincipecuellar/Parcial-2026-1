@@ -106,4 +106,60 @@ public class SolicitudesController : Controller
 
         return View(solicitud);
     }
+
+    // GET: Solicitudes/Create
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    // POST: Solicitudes/Create
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create([Bind("MontoSolicitado")] SolicitudCredito solicitud)
+    {
+        var userId = _userManager.GetUserId(User);
+        if (string.IsNullOrEmpty(userId)) return RedirectToAction("Login", "Account", new { area = "Identity" });
+
+        var cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.UsuarioId == userId);
+
+        // 1. Validar existencia y estado del cliente
+        if (cliente == null || !cliente.Activo)
+        {
+            ModelState.AddModelError(string.Empty, "No tienes un perfil de cliente activo para realizar esta solicitud.");
+            return View(solicitud);
+        }
+
+        // 2. Validar que no tenga solicitudes pendientes
+        bool tienePendiente = await _context.SolicitudesCredito
+            .AnyAsync(s => s.ClienteId == cliente.Id && s.Estado == EstadoSolicitud.Pendiente);
+        
+        if (tienePendiente)
+        {
+            ModelState.AddModelError(string.Empty, "Ya tienes una solicitud de crédito en estado Pendiente.");
+            return View(solicitud);
+        }
+
+        // 3. Validar monto solicitado vs ingresos (Max 10 veces)
+        if (solicitud.MontoSolicitado > cliente.IngresosMensuales * 10)
+        {
+            ModelState.AddModelError("MontoSolicitado", $"El monto máximo permitido es {cliente.IngresosMensuales * 10:C2} (10 veces tus ingresos mensuales).");
+            return View(solicitud);
+        }
+
+        if (ModelState.IsValid)
+        {
+            solicitud.ClienteId = cliente.Id;
+            solicitud.Estado = EstadoSolicitud.Pendiente;
+            solicitud.FechaSolicitud = DateTime.Now;
+
+            _context.Add(solicitud);
+            await _context.SaveChangesAsync();
+            
+            TempData["SuccessMessage"] = "Solicitud de crédito creada exitosamente. Está siendo evaluada.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        return View(solicitud);
+    }
 }
