@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 using Parcial_2026_1.Data;
 using Parcial_2026_1.Models;
 
@@ -12,12 +14,16 @@ public class SolicitudesController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly IDistributedCache _cache;
 
-    public SolicitudesController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+    public SolicitudesController(ApplicationDbContext context, UserManager<IdentityUser> userManager, IDistributedCache cache)
     {
         _context = context;
         _userManager = userManager;
+        _cache = cache;
     }
+
+    private string GetCacheKey(string userId) => $"solicitudes_{userId}";
 
     // GET: Solicitudes
     public async Task<IActionResult> Index(
@@ -43,38 +49,69 @@ public class SolicitudesController : Controller
             ModelState.AddModelError("fechaInicio", "La fecha de inicio no puede ser posterior a la fecha de fin.");
         }
 
-        var query = _context.SolicitudesCredito
-            .Where(s => s.ClienteId == cliente.Id)
-            .AsQueryable();
+        List<SolicitudCredito>? solicitudes = null;
 
-        // Aplicar filtros solo si ModelState es válido
-        if (ModelState.IsValid)
+        // Intentar obtener del caché solo si no hay filtros activos y no hay errores
+        bool hasFilters = estado.HasValue || montoMin.HasValue || montoMax.HasValue || fechaInicio.HasValue || fechaFin.HasValue;
+
+        if (!hasFilters && ModelState.IsValid)
         {
-            if (estado.HasValue)
+            var cacheKey = GetCacheKey(userId!);
+            var cachedData = await _cache.GetStringAsync(cacheKey);
+            if (cachedData != null)
             {
-                query = query.Where(s => s.Estado == estado.Value);
+                solicitudes = JsonSerializer.Deserialize<List<SolicitudCredito>>(cachedData);
+            }
+        }
+
+        if (solicitudes == null)
+        {
+            var query = _context.SolicitudesCredito
+                .Where(s => s.ClienteId == cliente.Id)
+                .AsQueryable();
+
+            // Aplicar filtros solo si ModelState es válido
+            if (ModelState.IsValid)
+            {
+                if (estado.HasValue)
+                {
+                    query = query.Where(s => s.Estado == estado.Value);
+                }
+
+                if (montoMin.HasValue)
+                {
+                    query = query.Where(s => s.MontoSolicitado >= montoMin.Value);
+                }
+
+                if (montoMax.HasValue)
+                {
+                    query = query.Where(s => s.MontoSolicitado <= montoMax.Value);
+                }
+
+                if (fechaInicio.HasValue)
+                {
+                    var dtInicio = fechaInicio.Value.ToDateTime(TimeOnly.MinValue);
+                    query = query.Where(s => s.FechaSolicitud >= dtInicio);
+                }
+
+                if (fechaFin.HasValue)
+                {
+                    var dtFin = fechaFin.Value.ToDateTime(TimeOnly.MaxValue);
+                    query = query.Where(s => s.FechaSolicitud <= dtFin);
+                }
             }
 
-            if (montoMin.HasValue)
-            {
-                query = query.Where(s => s.MontoSolicitado >= montoMin.Value);
-            }
+            solicitudes = await query.OrderByDescending(s => s.FechaSolicitud).ToListAsync();
 
-            if (montoMax.HasValue)
+            // Guardar en caché solo si no hay filtros
+            if (!hasFilters && ModelState.IsValid)
             {
-                query = query.Where(s => s.MontoSolicitado <= montoMax.Value);
-            }
-
-            if (fechaInicio.HasValue)
-            {
-                var dtInicio = fechaInicio.Value.ToDateTime(TimeOnly.MinValue);
-                query = query.Where(s => s.FechaSolicitud >= dtInicio);
-            }
-
-            if (fechaFin.HasValue)
-            {
-                var dtFin = fechaFin.Value.ToDateTime(TimeOnly.MaxValue);
-                query = query.Where(s => s.FechaSolicitud <= dtFin);
+                var cacheOptions = new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60)
+                };
+                var serialized = JsonSerializer.Serialize(solicitudes);
+                await _cache.SetStringAsync(GetCacheKey(userId!), serialized, cacheOptions);
             }
         }
 
@@ -84,7 +121,6 @@ public class SolicitudesController : Controller
         ViewBag.FechaInicio = fechaInicio?.ToString("yyyy-MM-dd");
         ViewBag.FechaFin = fechaFin?.ToString("yyyy-MM-dd");
 
-        var solicitudes = await query.OrderByDescending(s => s.FechaSolicitud).ToListAsync();
         return View(solicitudes);
     }
 
@@ -103,6 +139,13 @@ public class SolicitudesController : Controller
             .FirstOrDefaultAsync(m => m.Id == id && m.ClienteId == cliente.Id);
 
         if (solicitud == null) return NotFound();
+
+        // Guardar en sesión la última solicitud visitada
+        HttpContext.Session.SetString("ultima_solicitud", JsonSerializer.Serialize(new
+        {
+            Id = solicitud.Id,
+            Monto = solicitud.MontoSolicitado
+        }));
 
         return View(solicitud);
     }
@@ -155,11 +198,43 @@ public class SolicitudesController : Controller
 
             _context.Add(solicitud);
             await _context.SaveChangesAsync();
+
+            // Invalidar caché Redis
+            await _cache.RemoveAsync(GetCacheKey(userId));
             
             TempData["SuccessMessage"] = "Solicitud de crédito creada exitosamente. Está siendo evaluada.";
             return RedirectToAction(nameof(Index));
         }
 
         return View(solicitud);
+    }
+
+    // POST: Solicitudes/CambiarEstado (para invalidar caché en cambios de estado)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CambiarEstado(int id, EstadoSolicitud nuevoEstado, string? motivoRechazo)
+    {
+        var solicitud = await _context.SolicitudesCredito
+            .Include(s => s.Cliente)
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+        if (solicitud == null) return NotFound();
+
+        solicitud.Estado = nuevoEstado;
+        if (nuevoEstado == EstadoSolicitud.Rechazado)
+        {
+            solicitud.MotivoRechazo = motivoRechazo;
+        }
+
+        await _context.SaveChangesAsync();
+
+        // Invalidar caché Redis del cliente dueño de la solicitud
+        var clienteUserId = solicitud.Cliente?.UsuarioId;
+        if (!string.IsNullOrEmpty(clienteUserId))
+        {
+            await _cache.RemoveAsync(GetCacheKey(clienteUserId));
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
     }
 }

@@ -1,3 +1,4 @@
+@using System.Text.Json
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,6 +32,18 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Solicitudes" asp-action="Index">Mis Solicitudes</a>
                             </li>
+                            var ultimaSolicitud = Context.Session.GetString("ultima_solicitud");
+                            if (!string.IsNullOrEmpty(ultimaSolicitud))
+                            {
+                                var data = JsonSerializer.Deserialize<JsonElement>(ultimaSolicitud);
+                                var solId = data.GetProperty("Id").GetInt32();
+                                var solMonto = data.GetProperty("Monto").GetDecimal();
+                                <li class="nav-item">
+                                    <a class="nav-link text-info" asp-controller="Solicitudes" asp-action="Details" asp-route-id="@solId">
+                                        Ver última solicitud &mdash; S/. @solMonto.ToString("N2")
+                                    </a>
+                                </li>
+                            }
                         }
                     </ul>
                     <partial name="_LoginPartial" />
