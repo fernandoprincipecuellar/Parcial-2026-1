@@ -32,6 +32,12 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Solicitudes" asp-action="Index">Mis Solicitudes</a>
                             </li>
+                            if (User.IsInRole("Analista"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-danger fw-bold" asp-area="" asp-controller="Analista" asp-action="Index">Panel Analista</a>
+                                </li>
+                            }
                             var ultimaSolicitud = Context.Session.GetString("ultima_solicitud");
                             if (!string.IsNullOrEmpty(ultimaSolicitud))
                             {
