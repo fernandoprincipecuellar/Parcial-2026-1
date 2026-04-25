@@ -5,119 +5,124 @@
     ViewData["Title"] = "Mis Solicitudes";
 }
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>@ViewData["Title"]</h1>
-        <a asp-action="Create" class="btn btn-success">
-            <i class="bi bi-plus-circle"></i> Nueva Solicitud
-        </a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0">Gestión de Créditos</h1>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i> Nueva Solicitud
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
+}
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h5 class="card-title mb-3">Filtros de Búsqueda</h5>
-            <form method="get" asp-action="Index" class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">Estado</label>
-                    <select name="estado" class="form-select">
-                        <option value="">Todos</option>
-                        @foreach (var val in Enum.GetValues(typeof(EstadoSolicitud)))
-                        {
-                            <option value="@val" selected="@(ViewBag.Estado?.ToString() == val.ToString())">@val</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Monto Mínimo</label>
-                    <input type="number" step="0.01" name="montoMin" class="form-control" value="@ViewBag.MontoMin" />
-                    <span class="text-danger">@Html.ValidationMessage("montoMin")</span>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Monto Máximo</label>
-                    <input type="number" step="0.01" name="montoMax" class="form-control" value="@ViewBag.MontoMax" />
-                    <span class="text-danger">@Html.ValidationMessage("montoMax")</span>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Fecha Inicio</label>
-                    <input type="date" name="fechaInicio" class="form-control" value="@ViewBag.FechaInicio" />
-                    <span class="text-danger">@Html.ValidationMessage("fechaInicio")</span>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Fecha Fin</label>
-                    <input type="date" name="fechaFin" class="form-control" value="@ViewBag.FechaFin" />
-                </div>
-                <div class="col-md-1 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">Filtrar</button>
-                </div>
-            </form>
-            <div class="mt-2">
-                <a asp-action="Index" class="btn btn-link btn-sm">Limpiar Filtros</a>
-            </div>
-        </div>
-    </div>
-
-    @if (ViewData.ModelState.ErrorCount > 0)
-    {
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach (var modelState in ViewData.ModelState.Values)
-                {
-                    foreach (var error in modelState.Errors)
+<div class="card border-0 mb-4 shadow-sm">
+    <div class="card-body p-4">
+        <h5 class="card-title mb-4"><i class="bi bi-filter me-2 text-primary"></i> Filtros de Búsqueda</h5>
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Estado</label>
+                <select name="estado" class="form-select border-0 bg-light">
+                    <option value="">Todos los estados</option>
+                    @foreach (var val in Enum.GetValues(typeof(EstadoSolicitud)))
                     {
-                        <li>@error.ErrorMessage</li>
+                        @if (ViewBag.Estado?.ToString() == val.ToString())
+                        {
+                            <option value="@val" selected>@val</option>
+                        }
+                        else
+                        {
+                            <option value="@val">@val</option>
+                        }
                     }
-                }
-            </ul>
-        </div>
-    }
-
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>Fecha</th>
-                    <th>Monto</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>@item.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</td>
-                        <td>@item.MontoSolicitado.ToString("C2")</td>
-                        <td>
-                            <span class="badge @(item.Estado switch {
-                                EstadoSolicitud.Aprobado => "bg-success",
-                                EstadoSolicitud.Rechazado => "bg-danger",
-                                _ => "bg-warning text-dark"
-                            })">
-                                @item.Estado
-                            </span>
-                        </td>
-                        <td>
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info">
-                                <i class="bi bi-info-circle"></i> Ver Detalles
-                            </a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold">Monto Mínimo</label>
+                <input type="number" name="montoMin" class="form-control border-0 bg-light" value="@ViewBag.MontoMin" placeholder="S/. 0.00">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold">Monto Máximo</label>
+                <input type="number" name="montoMax" class="form-control border-0 bg-light" value="@ViewBag.MontoMax" placeholder="S/. 0.00">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold">Desde</label>
+                <input type="date" name="fechaInicio" class="form-control border-0 bg-light" value="@ViewBag.FechaInicio">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold">Hasta</label>
+                <input type="date" name="fechaFin" class="form-control border-0 bg-light" value="@ViewBag.FechaFin">
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i></button>
+            </div>
+            <div class="col-12 mt-2">
+                <a asp-action="Index" class="text-decoration-none small text-muted">
+                    <i class="bi bi-x-circle"></i> Limpiar filtros
+                </a>
+            </div>
+        </form>
+        <div asp-validation-summary="All" class="text-danger small mt-3"></div>
     </div>
+</div>
+
+<div class="table-container border-0">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Monto</th>
+                <th>Estado</th>
+                <th class="text-end">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="fw-bold">@item.FechaSolicitud.ToString("dd MMM, yyyy")</span>
+                            <span class="text-muted small">@item.FechaSolicitud.ToString("HH:mm")</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="fs-5 fw-bold text-dark">S/. @item.MontoSolicitado.ToString("N2")</span>
+                    </td>
+                    <td>
+                        @switch (item.Estado)
+                        {
+                            case EstadoSolicitud.Pendiente:
+                                <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i> @item.Estado</span>
+                                break;
+                            case EstadoSolicitud.Aprobado:
+                                <span class="badge bg-success"><i class="bi bi-check-lg me-1"></i> @item.Estado</span>
+                                break;
+                            case EstadoSolicitud.Rechazado:
+                                <span class="badge bg-danger"><i class="bi bi-x-lg me-1"></i> @item.Estado</span>
+                                break;
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-light btn-sm rounded-3 px-3 shadow-sm">
+                            <i class="bi bi-info-circle me-1"></i> Detalles
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 
     @if (!Model.Any())
     {
-        <div class="text-center mt-5">
+        <div class="text-center py-5">
+            <div class="display-1 text-muted opacity-25 mb-3">
+                <i class="bi bi-folder-x"></i>
+            </div>
             <p class="text-muted">No se encontraron solicitudes que coincidan con los criterios.</p>
         </div>
     }

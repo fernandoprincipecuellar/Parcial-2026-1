@@ -2,96 +2,111 @@
 @using Parcial_2026_1.Models
 
 @{
-    ViewData["Title"] = "Panel del Analista - Solicitudes Pendientes";
+    ViewData["Title"] = "Panel de Control - Analista";
 }
 
-<div class="container mt-4">
-    <h1 class="mb-4">@ViewData["Title"]</h1>
+<div class="mb-4">
+    <span class="badge bg-primary-subtle text-primary mb-2">Administración</span>
+    <h1 class="h2">Revisión de Solicitudes</h1>
+</div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
 
-    <div class="table-responsive shadow-sm rounded">
-        <table class="table table-hover align-middle">
-            <thead class="table-dark">
+<div class="table-container border-0 shadow-sm p-0 overflow-hidden">
+    <table class="table table-hover mb-0">
+        <thead class="bg-light">
+            <tr>
+                <th class="ps-4">Solicitud</th>
+                <th>Cliente ID</th>
+                <th>Ingresos Mensuales</th>
+                <th>Monto Solicitado</th>
+                <th class="text-end pe-4">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
                 <tr>
-                    <th>ID</th>
-                    <th>Fecha</th>
-                    <th>Cliente (ID)</th>
-                    <th>Ingresos Mensuales</th>
-                    <th>Monto Solicitado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>#@item.Id</td>
-                        <td>@item.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</td>
-                        <td>@item.ClienteId</td>
-                        <td>@item.Cliente?.IngresosMensuales.ToString("C2")</td>
-                        <td class="fw-bold text-primary">@item.MontoSolicitado.ToString("C2")</td>
-                        <td>
-                            <div class="d-flex gap-2">
-                                <form asp-action="Aprobar" asp-route-id="@item.Id" method="post">
-                                    <button type="submit" class="btn btn-sm btn-success">
-                                        <i class="bi bi-check-circle"></i> Aprobar
-                                    </button>
-                                </form>
-
-                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#modalRechazo-@item.Id">
-                                    <i class="bi bi-x-circle"></i> Rechazar
+                    <td class="ps-4">
+                        <div class="d-flex flex-column">
+                            <span class="fw-bold text-dark">#@item.Id</span>
+                            <span class="text-muted small">@item.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border">ID: @item.ClienteId</span>
+                    </td>
+                    <td>
+                        <span class="text-muted">S/. @item.Cliente?.IngresosMensuales.ToString("N2")</span>
+                    </td>
+                    <td>
+                        <span class="fw-bold text-primary">S/. @item.MontoSolicitado.ToString("N2")</span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="btn-group shadow-sm rounded-3">
+                            <form asp-action="Aprobar" asp-route-id="@item.Id" method="post">
+                                <button type="submit" class="btn btn-success btn-sm border-0 px-3">
+                                    <i class="bi bi-check2"></i> Aprobar
                                 </button>
-                            </div>
+                            </form>
+                            <button type="button" class="btn btn-danger btn-sm border-0 px-3" data-bs-toggle="modal" data-bs-target="#modalRechazo-@item.Id">
+                                <i class="bi bi-x-lg"></i> Rechazar
+                            </button>
+                        </div>
 
-                            <!-- Modal para Rechazo -->
-                            <div class="modal fade" id="modalRechazo-@item.Id" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <form asp-action="Rechazar" asp-route-id="@item.Id" method="post">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Rechazar Solicitud #@item.Id</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <!-- Modal para Rechazo -->
+                        <div class="modal fade" id="modalRechazo-@item.Id" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4 text-start">
+                                    <form asp-action="Rechazar" asp-route-id="@item.Id" method="post">
+                                        <div class="modal-header border-0 pb-0">
+                                            <h5 class="modal-title fw-bold">Confirmar Rechazo</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body py-4">
+                                            <p class="text-muted small mb-3">Solicitud #@item.Id - Monto: S/. @item.MontoSolicitado.ToString("N2")</p>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Motivo del Rechazo</label>
+                                                <textarea name="motivoRechazo" class="form-control border-0 bg-light rounded-3" 
+                                                          rows="3" required placeholder="Describe brevemente la razón del rechazo..."></textarea>
                                             </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Motivo del Rechazo</label>
-                                                    <textarea name="motivoRechazo" class="form-control" rows="3" required placeholder="Explique por qué se rechaza la solicitud..."></textarea>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-modal="dismiss">Cancelar</button>
-                                                <button type="submit" class="btn btn-danger">Confirmar Rechazo</button>
-                                            </div>
-                                        </form>
-                                    </div>
+                                        </div>
+                                        <div class="modal-footer border-0 pt-0">
+                                            <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-danger rounded-3 px-4">Confirmar Rechazo</button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 
     @if (!Model.Any())
     {
-        <div class="alert alert-info text-center mt-4">
-            <i class="bi bi-info-circle"></i> No hay solicitudes pendientes de revisión.
+        <div class="text-center py-5">
+            <div class="stat-icon icon-blue mx-auto mb-3 opacity-50">
+                <i class="bi bi-journal-check"></i>
+            </div>
+            <h5 class="text-muted">¡Buen trabajo!</h5>
+            <p class="text-muted small">No hay solicitudes pendientes de revisión.</p>
         </div>
     }
 </div>

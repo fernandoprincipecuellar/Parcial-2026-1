@@ -2,57 +2,75 @@
 @using Parcial_2026_1.Models
 
 @{
-    ViewData["Title"] = "Detalle de Solicitud #" + Model.Id;
+    ViewData["Title"] = "Detalle de Solicitud";
 }
 
-<div class="container mt-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-action="Index">Mis Solicitudes</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Detalle</li>
-        </ol>
-    </nav>
+<div class="row justify-content-center py-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-lg overflow-hidden">
+            <div class="p-4 text-white @(Model.Estado == EstadoSolicitud.Aprobado ? "bg-success" : Model.Estado == EstadoSolicitud.Rechazado ? "bg-danger" : "bg-primary")">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h1 class="h3 mb-1">Solicitud #@Model.Id</h1>
+                        <p class="mb-0 opacity-75">Registrada el @Model.FechaSolicitud.ToString("f")</p>
+                    </div>
+                    <div class="fs-1 opacity-25">
+                        <i class="bi @(Model.Estado == EstadoSolicitud.Aprobado ? "bi-check-circle" : Model.Estado == EstadoSolicitud.Rechazado ? "bi-x-circle" : "bi-clock-history")"></i>
+                    </div>
+                </div>
+            </div>
 
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h3 class="mb-0">@ViewData["Title"]</h3>
-                    <span class="badge @(Model.Estado switch {
-                        EstadoSolicitud.Aprobado => "bg-success",
-                        EstadoSolicitud.Rechazado => "bg-danger",
-                        _ => "bg-warning text-dark"
-                    }) fs-6">
-                        @Model.Estado
-                    </span>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-sm-4 text-muted">Fecha de Solicitud:</div>
-                        <div class="col-sm-8 fw-bold">@Model.FechaSolicitud.ToString("f")</div>
+            <div class="card-body p-4 p-lg-5">
+                <div class="row g-4 mb-5">
+                    <div class="col-6">
+                        <p class="text-muted small mb-1 text-uppercase fw-bold">Monto Solicitado</p>
+                        <h2 class="h3 mb-0 fw-bold">S/. @Model.MontoSolicitado.ToString("N2")</h2>
                     </div>
-                    <hr />
-                    <div class="row mb-3">
-                        <div class="col-sm-4 text-muted">Monto Solicitado:</div>
-                        <div class="col-sm-8 fs-4 text-primary fw-bold">@Model.MontoSolicitado.ToString("C2")</div>
-                    </div>
-                    <hr />
-                    <div class="row mb-3">
-                        <div class="col-sm-4 text-muted">Ingresos Declarados:</div>
-                        <div class="col-sm-8">@Model.Cliente?.IngresosMensuales.ToString("C2")</div>
-                    </div>
-                    
-                    @if (Model.Estado == EstadoSolicitud.Rechazado)
-                    {
-                        <hr />
-                        <div class="row mb-3">
-                            <div class="col-sm-4 text-danger">Motivo de Rechazo:</div>
-                            <div class="col-sm-8 text-danger fw-bold">@(Model.MotivoRechazo ?? "No especificado")</div>
+                    <div class="col-6">
+                        <p class="text-muted small mb-1 text-uppercase fw-bold">Estado Actual</p>
+                        <div class="d-flex align-items-center">
+                            @switch (Model.Estado)
+                            {
+                                case EstadoSolicitud.Pendiente:
+                                    <span class="badge bg-warning text-dark px-3 py-2"><i class="bi bi-hourglass-split me-1"></i> @Model.Estado</span>
+                                    break;
+                                case EstadoSolicitud.Aprobado:
+                                    <span class="badge bg-success px-3 py-2"><i class="bi bi-check2-all me-1"></i> @Model.Estado</span>
+                                    break;
+                                case EstadoSolicitud.Rechazado:
+                                    <span class="badge bg-danger px-3 py-2"><i class="bi bi-x-octagon me-1"></i> @Model.Estado</span>
+                                    break;
+                            }
                         </div>
-                    }
+                    </div>
                 </div>
-                <div class="card-footer bg-light text-end">
-                    <a asp-action="Index" class="btn btn-secondary">Volver al listado</a>
+
+                <div class="bg-light p-4 rounded-4 mb-4 border border-white">
+                    <h5 class="mb-3"><i class="bi bi-person-badge me-2 text-primary"></i> Información del Cliente</h5>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <span class="text-muted d-block small">ID del Cliente</span>
+                            <span class="fw-bold">@Model.ClienteId</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-muted d-block small">Ingresos Mensuales</span>
+                            <span class="fw-bold text-success">S/. @Model.Cliente?.IngresosMensuales.ToString("N2")</span>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.Estado == EstadoSolicitud.Rechazado && !string.IsNullOrEmpty(Model.MotivoRechazo))
+                {
+                    <div class="alert alert-danger border-0 rounded-4 p-4 shadow-sm">
+                        <h6 class="fw-bold mb-2"><i class="bi bi-info-circle-fill me-2"></i> Motivo del Rechazo:</h6>
+                        <p class="mb-0 small">@Model.MotivoRechazo</p>
+                    </div>
+                }
+
+                <div class="d-flex gap-2 mt-5">
+                    <a asp-action="Index" class="btn btn-light btn-lg flex-grow-1 py-3 border-0">
+                        <i class="bi bi-arrow-left me-2"></i> Volver al listado
+                    </a>
                 </div>
             </div>
         </div>
