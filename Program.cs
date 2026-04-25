@@ -15,6 +15,11 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => options.Sign
     .AddDefaultTokenProviders()
     .AddDefaultUI();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.AccessDeniedPath = "/Acceso-Denegado";
+});
+
 // Redis distributed cache
 var redisConnectionString = builder.Configuration["Redis:ConnectionString"]
     ?? throw new InvalidOperationException("Redis connection string not found.");

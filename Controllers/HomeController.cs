@@ -16,6 +16,12 @@ public class HomeController : Controller
         return View();
     }
 
+    [Route("Acceso-Denegado")]
+    public IActionResult AccessDenied()
+    {
+        return View();
+    }
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

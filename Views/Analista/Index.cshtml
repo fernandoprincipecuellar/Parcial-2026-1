@@ -1,0 +1,97 @@
+@model IEnumerable<Parcial_2026_1.Models.SolicitudCredito>
+@using Parcial_2026_1.Models
+
+@{
+    ViewData["Title"] = "Panel del Analista - Solicitudes Pendientes";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Cliente (ID)</th>
+                    <th>Ingresos Mensuales</th>
+                    <th>Monto Solicitado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>#@item.Id</td>
+                        <td>@item.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@item.ClienteId</td>
+                        <td>@item.Cliente?.IngresosMensuales.ToString("C2")</td>
+                        <td class="fw-bold text-primary">@item.MontoSolicitado.ToString("C2")</td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <form asp-action="Aprobar" asp-route-id="@item.Id" method="post">
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="bi bi-check-circle"></i> Aprobar
+                                    </button>
+                                </form>
+
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#modalRechazo-@item.Id">
+                                    <i class="bi bi-x-circle"></i> Rechazar
+                                </button>
+                            </div>
+
+                            <!-- Modal para Rechazo -->
+                            <div class="modal fade" id="modalRechazo-@item.Id" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form asp-action="Rechazar" asp-route-id="@item.Id" method="post">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Rechazar Solicitud #@item.Id</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Motivo del Rechazo</label>
+                                                    <textarea name="motivoRechazo" class="form-control" rows="3" required placeholder="Explique por qué se rechaza la solicitud..."></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-modal="dismiss">Cancelar</button>
+                                                <button type="submit" class="btn btn-danger">Confirmar Rechazo</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center mt-4">
+            <i class="bi bi-info-circle"></i> No hay solicitudes pendientes de revisión.
+        </div>
+    }
+</div>
