@@ -1,43 +1,44 @@
 @model Parcial_2026_1.Models.SolicitudCredito
 
 @{
-    ViewData["Title"] = "Nueva Solicitud de Crédito";
+    ViewData["Title"] = "Solicitar Nuevo Crédito";
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-success text-white">
-                    <h3 class="mb-0">@ViewData["Title"]</h3>
+<div class="row justify-content-center py-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-0 shadow-lg p-4">
+            <div class="text-center mb-4">
+                <div class="stat-icon icon-purple mx-auto mb-3">
+                    <i class="bi bi-piggy-bank"></i>
                 </div>
-                <div class="card-body">
-                    <p class="text-muted small mb-4">
-                        Recuerda que el monto solicitado no puede exceder 10 veces tus ingresos mensuales declarados.
-                    </p>
-
-                    <form asp-action="Create">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
-                        <div class="mb-3">
-                            <label asp-for="MontoSolicitado" class="form-label">Monto a Solicitar</label>
-                            <div class="input-group">
-                                <span class="input-group-text">S/</span>
-                                <input asp-for="MontoSolicitado" class="form-control form-control-lg" placeholder="0.00" step="0.01" />
-                            </div>
-                            <span asp-validation-for="MontoSolicitado" class="text-danger small"></span>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">Enviar Solicitud</button>
-                            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-footer bg-light">
-                    <small class="text-muted">Tu solicitud será evaluada por un analista en un plazo de 24 a 48 horas.</small>
-                </div>
+                <h1 class="h3">Nueva Solicitud</h1>
+                <p class="text-muted">Ingresa el monto que necesitas para iniciar tu evaluación.</p>
             </div>
+
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 small"></div>
+                
+                <div class="form-floating mb-4">
+                    <input asp-for="MontoSolicitado" class="form-control border-0 bg-light fs-4 fw-bold text-center" 
+                           placeholder="0.00" style="height: 100px;" />
+                    <label asp-for="MontoSolicitado">Monto a Solicitar (S/.)</label>
+                    <span asp-validation-for="MontoSolicitado" class="text-danger small"></span>
+                </div>
+
+                <div class="alert alert-info border-0 shadow-sm small mb-4">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    Recuerda que el monto máximo está sujeto a tus ingresos mensuales declarados.
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg py-3">
+                        <i class="bi bi-send me-2"></i> Enviar Solicitud
+                    </button>
+                    <a asp-action="Index" class="btn btn-light btn-lg py-3 border-0">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 </div>
