@@ -70,10 +70,15 @@ app.MapControllerRoute(
 app.MapRazorPages()
    .WithStaticAssets();
 
-// Seed Data
+// Seed Data and Apply Migrations
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    
+    // Aplicar migraciones automáticamente
+    context.Database.Migrate();
+    
     await DbInitializer.Initialize(services);
 }
 
