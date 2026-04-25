@@ -1,0 +1,60 @@
+@model Parcial_2026_1.Models.SolicitudCredito
+@using Parcial_2026_1.Models
+
+@{
+    ViewData["Title"] = "Detalle de Solicitud #" + Model.Id;
+}
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Mis Solicitudes</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Detalle</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">@ViewData["Title"]</h3>
+                    <span class="badge @(Model.Estado switch {
+                        EstadoSolicitud.Aprobado => "bg-success",
+                        EstadoSolicitud.Rechazado => "bg-danger",
+                        _ => "bg-warning text-dark"
+                    }) fs-6">
+                        @Model.Estado
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted">Fecha de Solicitud:</div>
+                        <div class="col-sm-8 fw-bold">@Model.FechaSolicitud.ToString("f")</div>
+                    </div>
+                    <hr />
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted">Monto Solicitado:</div>
+                        <div class="col-sm-8 fs-4 text-primary fw-bold">@Model.MontoSolicitado.ToString("C2")</div>
+                    </div>
+                    <hr />
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted">Ingresos Declarados:</div>
+                        <div class="col-sm-8">@Model.Cliente?.IngresosMensuales.ToString("C2")</div>
+                    </div>
+                    
+                    @if (Model.Estado == EstadoSolicitud.Rechazado)
+                    {
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-sm-4 text-danger">Motivo de Rechazo:</div>
+                            <div class="col-sm-8 text-danger fw-bold">@(Model.MotivoRechazo ?? "No especificado")</div>
+                        </div>
+                    }
+                </div>
+                <div class="card-footer bg-light text-end">
+                    <a asp-action="Index" class="btn btn-secondary">Volver al listado</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
