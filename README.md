@@ -27,7 +27,7 @@ Para despliegue (Docker/Render), asegúrate de configurar las siguientes variabl
 - `ASPNETCORE_ENVIRONMENT`: `Production` o `Development`.
 - `ASPNETCORE_URLS`: `http://*:$PORT` (manejado por el Dockerfile).
 - `ConnectionStrings__DefaultConnection`: Cadena de conexión a la base de datos (ej: `DataSource=app.db`).
-- `Redis__ConnectionString`: Cadena de conexión a Redis Cloud.
+- `Redis__ConnectionString`: Cadena de conexión a Redis Cloud (ej: `redis-11967.c277.us-east-1-3.ec2.cloud.redislabs.com:11967,password=...,ssl=false,abortConnect=false,connectTimeout=10000,syncTimeout=10000`).
 
 ## Despliegue en Render
 
