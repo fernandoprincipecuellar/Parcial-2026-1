@@ -23,9 +23,16 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Redis distributed cache
 var redisConnectionString = builder.Configuration["Redis:ConnectionString"]
     ?? throw new InvalidOperationException("Redis connection string not found.");
+
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = redisConnectionString;
+    var configOptions = StackExchange.Redis.ConfigurationOptions.Parse(redisConnectionString);
+    configOptions.ConnectTimeout = 15000;
+    configOptions.SyncTimeout = 15000;
+    configOptions.AbortOnConnectFail = false;
+    configOptions.ConnectRetry = 5;
+    
+    options.ConfigurationOptions = configOptions;
     options.InstanceName = "Parcial2026_";
 });
 
